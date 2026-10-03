@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NinesBudget - what an uptime target really allows</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:#17141f; color:#f3ede6; line-height:1.5; }
+  .wrap { max-width:700px; margin:0 auto; padding:26px 16px 50px; }
+  h1 { font-size:28px; } h1 span { color:#b392f0; }
+  .sub { color:#b5aa9c; margin:6px 0 16px; }
+  .card { background:#231e30; border-radius:14px; padding:14px; margin-bottom:12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; }
+  label { font-size:12px; color:#b5aa9c; display:block; margin-bottom:3px; }
+  input,select { width:100%; background:#17141f; color:#f3ede6; border:1px solid #574f48; border-radius:8px; padding:8px; font-size:15px; font-family:inherit; }
+  button { background:#46386b; color:#f3ede6; border:0; padding:8px 14px; border-radius:8px; cursor:pointer; font-size:14px; margin-right:6px; margin-top:10px; }
+  table { width:100%; border-collapse:collapse; } td,th { text-align:left; padding:8px 4px; border-bottom:1px solid #433c36; } th { font-size:12px; color:#b5aa9c; font-weight:600; }
+  td.v { font-size:22px; font-weight:800; color:#b392f0; } tr.me td.v { color:#f3ede6; }
+  .stats { display:flex; gap:22px; flex-wrap:wrap; margin-top:12px; } .stats b { display:block; font-size:20px; } .muted { color:#b5aa9c; font-size:13px; }
+  .err { color:#ff9c8a; } .note { font-size:12.5px; color:#8c8174; margin-top:6px; }
+
+  td.v { font-size:17px; } td, th { font-size:14px; } .bar { height:10px; background:#17141f; border-radius:6px; overflow:hidden; margin-top:6px; } .bar i { display:block; height:100%; background:#b392f0; } .bar i.over { background:#ff7b72; } .no { color:#ff9c8a; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Nines<span>Budget</span></h1>
+  <div class="sub">What 99.9% uptime really allows, what your stack can promise, and how much error budget is left.</div>
+  <div class="card">
+    <h2 style="margin:0 0 8px;font-size:15px">1. Allowed downtime for a target</h2>
+    <div class="grid"><div><label>Availability target (%)</label><input id="tgt" value="99.9"></div></div>
+    <button id="t1">99%</button><button id="t2">99.9%</button><button id="t3">99.95%</button><button id="t4">99.99%</button><button id="t5">99.999%</button>
+    <div id="tab" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
+    <h2 style="margin:0 0 8px;font-size:15px">2. What your stack can promise</h2>
+    <div class="grid">
+      <div><label>Components in a chain, all needed (% each, comma separated)</label><input id="ser" value="99.99, 99.95, 99.9"></div>
+      <div><label>Redundant copies, one is enough (% each, comma separated)</label><input id="par" value="99.9, 99.9"></div>
+    </div>
+    <div id="comb" style="margin-top:10px"></div>
+  </div>
+  <div class="card">
+    <h2 style="margin:0 0 8px;font-size:15px">3. Error budget this period</h2>
+    <div class="grid">
+      <div><label>Target (%)</label><input id="btgt" value="99.9"></div>
+      <div><label>Period (days)</label><input id="bdays" value="30"></div>
+      <div><label>Downtime so far (minutes)</label><input id="bused" value="20"></div>
+    </div>
+    <div id="bud" style="margin-top:10px"></div>
+  </div>
+  <div class="note">Allowed downtime = (1 - availability) x period, with a 365-day year and a month of one twelfth of it (30.4 days). This matches the downtime table in Wikipedia's "High availability" article (99.9% = about 8.8 hours a year, 99.99% = about 52.6 minutes a year). Nines = -log10(1 - availability), so 99.95% is 3.3 nines, not 3.5. A chain multiplies availabilities, so three 99.9% parts give 99.7%. Redundant copies multiply the failure chances, which assumes failures are independent; shared causes (same region, same bad deploy) make real redundancy worse than this figure. Planned maintenance, partial outages and what counts as down depend on your SLA wording. Runs in your browser, nothing stored.</div>
+</div>
+<script src="engine.js"></script>
+<script>
+(function () {
+  var N = window.NinesBudget, $ = function (i) { return document.getElementById(i); }, v = function (i) { return parseFloat($(i).value); };
+  function list(s) { return s.split(',').map(function (x) { return x.trim(); }).filter(function (x) { return x !== ''; }).map(parseFloat); }
+  function pct(x) { return (Math.round(x * 1e6) / 1e6).toString() + '%'; }
+  function tab() {
+    var t = N.table(v('tgt')); if (!t) { $('tab').innerHTML = '<div class="err">Enter a target from 0 to 100.</div>'; return; }
+    var n = N.nines(v('tgt'));
+    $('tab').innerHTML = '<div class="muted">' + (n === Infinity ? 'Perfect uptime: no downtime allowed.' : f1(n) + ' nines') + '</div><table><tr><th>Per day</th><th>Per week</th><th>Per month</th><th>Per year</th></tr><tr><td class="v">' + N.fmt(t.day) + '</td><td class="v">' + N.fmt(t.week) + '</td><td class="v">' + N.fmt(t.month) + '</td><td class="v">' + N.fmt(t.year) + '</td></tr></table>';
+  }
+  function f1(x) { return x.toFixed(2).replace(/0$/, '').replace(/\.0$/, ''); }
+  function comb() {
+    var s = list($('ser').value), p = list($('par').value), a = N.series(s), b = N.parallel(p);
+    var h = '';
+    h += a === null ? '<div class="err">Chain: enter percentages between 0 and 100.</div>' : '<div>Chain of ' + s.length + ': <b>' + pct(a) + '</b> (about ' + N.fmt(N.allowed(a, 365)) + ' of downtime a year, ' + f1(N.nines(a)) + ' nines). Worse than the weakest part.</div>';
+    h += b === null ? '<div class="err">Copies: enter percentages between 0 and 100.</div>' : '<div style="margin-top:6px">' + p.length + ' redundant copies: <b>' + pct(b) + '</b> if failures are independent (about ' + N.fmt(N.allowed(b, 365)) + ' a year).</div>';
+    $('comb').innerHTML = h;
+  }
+  function bud() {
+    var r = N.budget(v('btgt'), v('bdays'), v('bused') * 60);
+    if (!r) { $('bud').innerHTML = '<div class="err">Target 0 to 100, days above 0, downtime 0 or more.</div>'; return; }
+    var w = isFinite(r.usedPct) ? Math.min(100, r.usedPct) : 100;
+    $('bud').innerHTML = '<div class="stats"><div><span class="muted">Budget</span><b>' + N.fmt(r.total) + '</b></div><div><span class="muted">Used</span><b>' + (isFinite(r.usedPct) ? r.usedPct.toFixed(0) + '%' : 'all') + '</b></div><div><span class="muted">Left</span><b>' + (r.breached ? '<span class="no">breached by ' + N.fmt(-r.left) + '</span>' : N.fmt(r.left)) + '</b></div></div><div class="bar"><i class="' + (r.breached ? 'over' : '') + '" style="width:' + w + '%"></i></div><div class="muted" style="margin-top:6px">Achieved so far: ' + pct(r.achieved) + '.</div>';
+  }
+  function all() { tab(); comb(); bud(); }
+  ['tgt', 'ser', 'par', 'btgt', 'bdays', 'bused'].forEach(function (i) { $(i).oninput = all; });
+  [['t1', 99], ['t2', 99.9], ['t3', 99.95], ['t4', 99.99], ['t5', 99.999]].forEach(function (x) { $(x[0]).onclick = function () { $('tgt').value = x[1]; all(); }; });
+  all();
+})();
+</script>
+</body>
+</html>
