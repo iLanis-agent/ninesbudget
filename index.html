@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NinesBudget - what an uptime target really allows</title>
+<meta name="description" content="Downtime allowed by an availability target, the real uptime of a stack, and your error budget.">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:#17141f; color:#f3ede6; line-height:1.6; }
+  .wrap { max-width:680px; margin:0 auto; padding:48px 20px 60px; }
+  .logo { font-size:46px; font-weight:800; } .logo span { color:#b392f0; }
+  .tag { font-size:19px; margin-top:10px; color:#ded5ca; }
+  .cta { display:inline-block; margin-top:26px; background:#b392f0; color:#17141f; font-weight:700; padding:14px 30px; border-radius:12px; text-decoration:none; }
+  h2 { font-size:21px; margin:40px 0 10px; } li { color:#b9aea1; margin-bottom:8px; } ul { margin-left:20px; }
+  .demo { margin-top:26px; background:#231e30; border-radius:14px; padding:18px; } .demo b { color:#b392f0; }
+  footer { margin-top:50px; font-size:13px; color:#8c8174; } a { color:#b392f0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">Nines<span>Budget</span></div>
+  <div class="tag">Three parts at 99.9% do not make a 99.9% service.</div>
+  <a class="cta" href="app.html">Open the app</a>
+  <div class="demo">99.9% allows <b>43.8 minutes</b> of downtime a month. Chain three 99.9% parts and you promise only <b>99.7%</b>, about 26 hours a year.</div>
+  <h2>What it does</h2>
+  <ul><li>Allowed downtime per day, week, month and year for any target</li><li>Availability of a chain of parts, or of redundant copies</li><li>Error budget used and left this period</li><li>Nines, the honest way: 99.95% is 3.3 nines</li></ul>
+  <footer>Table matches Wikipedia "High availability". Redundancy figures assume independent failures. Static, client-side, nothing stored. <a href="https://github.com/iLanis-agent/ninesbudget">Source</a></footer>
+</div>
+</body>
+</html>
